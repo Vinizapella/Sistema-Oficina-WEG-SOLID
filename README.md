@@ -311,6 +311,149 @@ cd oficina-weg
 # http://localhost:8080
 ```
 
+## 🗄️ Configuração do Banco de Dados (MySQL com Docker)
+
+O sistema utiliza **MySQL** como banco de dados relacional. Para facilitar a instalação, garantir portabilidade e consistência entre ambientes, o banco foi configurado utilizando **Docker Compose**.
+
+---
+
+### 1. Criação da pasta e do arquivo `docker-compose.yml`
+
+1. Crie uma pasta chamada **`mysql`** no seu computador.  
+2. Dentro dessa pasta, crie o arquivo **`docker-compose.yml`** com o seguinte conteúdo:
+
+```yaml
+version: '3.8'
+services:
+  db:
+    image: mysql/mysql-server:latest
+    container_name: my-mysql
+    restart: always
+    environment:
+      - MYSQL_DATABASE=mysqlDB
+      - MYSQL_ROOT_PASSWORD=mysqlPW
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-volume:/var/lib/mysql
+
+volumes:
+  mysql-volume:
+    driver: local
+```
+
+#### Explicação dos principais parâmetros:
+
+- **image**: Imagem oficial do MySQL  
+- **container_name**: Nome do container (`my-mysql`)  
+- **MYSQL_DATABASE**: Banco criado automaticamente na inicialização  
+- **MYSQL_ROOT_PASSWORD**: Senha do usuário root (`mysqlPW`)  
+- **ports**: Expõe a porta 3306 para acesso externo  
+- **volumes**: Garante persistência dos dados mesmo se o container for removido  
+
+---
+
+### 2. Inicializando o container MySQL
+
+Abra o terminal, navegue até a pasta que contém o arquivo `docker-compose.yml` e execute o comando:
+
+```bash
+docker-compose up -d
+```
+
+O parâmetro `-d` executa o container em segundo plano (**detached mode**).
+
+---
+
+### 3. Configurando o acesso remoto ao MySQL (dentro do container)
+
+Execute os seguintes passos para permitir conexões externas:
+
+#### Passo 1: Acesse o container:
+```bash
+docker exec -it my-mysql bash
+```
+
+#### Passo 2: Conecte-se ao MySQL:
+```bash
+mysql -u root -p
+```
+(Digite a senha: `mysqlPW`)
+
+#### Passo 3: Crie o banco de dados:
+```sql
+CREATE DATABASE oficina_weg;
+```
+
+#### Passo 4: Libere o acesso do usuário root:
+```sql
+UPDATE mysql.user SET host='%' WHERE user='root';
+```
+
+#### Passo 5: Aplique as alterações:
+```sql
+FLUSH PRIVILEGES;
+```
+
+#### Passo 6: Saia do MySQL e do container:
+```bash
+EXIT;
+exit
+```
+
+---
+
+### 4. Configuração no `application.properties`
+
+O arquivo `src/main/resources/application.properties` contém:
+
+```properties
+spring.application.name=oficina
+
+# Configuração do banco de dados MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/oficina_weg?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+spring.datasource.username=root
+spring.datasource.password=mysqlPW
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Configurações do JPA/Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# Logging
+logging.level.org.hibernate.orm.jdbc.bind=TRACE
+logging.level.org.springframework.web=INFO
+
+# Configuração customizada da aplicação
+oficina.config.max-alunos-os=3
+```
+
+#### Observações importantes:
+
+- **ddl-auto=update** → O Hibernate cria e atualiza automaticamente as tabelas com base nas entidades do modelo.  
+- O banco **`oficina_weg`** é criado automaticamente na primeira execução graças ao parâmetro `createDatabaseIfNotExist=true`.  
+
+---
+
+### 5. Verificando o funcionamento
+
+Após subir o container Docker e executar a aplicação Spring Boot, você pode:
+
+#### Acessar o MySQL via MySQL Workbench:
+- **Host:** localhost  
+- **Porta:** 3306  
+- **Usuário:** root  
+- **Senha:** mysqlPW  
+
+#### Visualizar as tabelas criadas automaticamente:
+- `usuario`  
+- `aluno`  
+- `professor`  
+- `turma`  
+- `ordem_servico`
+
 ---
 
 ## 🌐 Endpoints da API
