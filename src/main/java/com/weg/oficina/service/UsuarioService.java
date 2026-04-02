@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UsuarioServiceImpl implements IUsuarioService{
+public class UsuarioService implements IUsuarioService{
 
     private final UsuarioRepository usuarioRepository;
 
     private final UsuarioMapper usuarioMapper;
 
-    public UsuarioServiceImpl(
+    public UsuarioService(
             UsuarioRepository usuarioRepository,
             UsuarioMapper usuarioMapper
     ) {

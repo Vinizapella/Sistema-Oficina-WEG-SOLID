@@ -1,5 +1,6 @@
 package com.weg.oficina.service;
 
+import com.weg.oficina.dto.ordemServico.OrdemServicoAtualizarDto;
 import com.weg.oficina.dto.ordemServico.OrdemServicoRequestDto;
 import com.weg.oficina.dto.ordemServico.OrdemServicoResponseDto;
 import com.weg.oficina.mapper.OrdemServicoMapper;
@@ -19,6 +20,8 @@ public class OrdemServicoService implements IOrdemServicoService{
     private final OrdemServicoMapper ordemServicoMapper;
 
     private final UsuarioRepository usuarioRepository;
+
+
 
     public OrdemServicoService(
             OrdemServicoRepository ordemServicoRepository,
@@ -52,15 +55,14 @@ public class OrdemServicoService implements IOrdemServicoService{
     @Transactional
     public void atualizarStatus(
             Long id,
-            String novoStatus,
-            String laudo,
-            String materiais
+            OrdemServicoAtualizarDto ordemServicoAtualizarDto
     ) {
         OrdemServico os = ordemServicoRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Ordem de serviço não encontrada"));
-        os.setStatus(novoStatus);
-        os.setLaudoTecnico(laudo);
-        os.setMaterialUsados(materiais);
+
+        os.setStatus(ordemServicoAtualizarDto.novoStatus());
+        os.setLaudoTecnico(ordemServicoAtualizarDto.laudo());
+        os.setMaterialUsados(ordemServicoAtualizarDto.materiais());
         ordemServicoRepository.save(os);
     }
 }

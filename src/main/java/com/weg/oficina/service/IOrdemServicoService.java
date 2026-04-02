@@ -1,5 +1,6 @@
 package com.weg.oficina.service;
 
+import com.weg.oficina.dto.ordemServico.OrdemServicoAtualizarDto;
 import com.weg.oficina.dto.ordemServico.OrdemServicoRequestDto;
 import com.weg.oficina.dto.ordemServico.OrdemServicoResponseDto;
 
@@ -11,9 +12,7 @@ public interface IOrdemServicoService {
 
     void atualizarStatus(
             Long id,
-            String novoStatus,
-            String laudo,
-            String materiais
+            OrdemServicoAtualizarDto ordemServicoAtualizarDto
     );
 
 }
