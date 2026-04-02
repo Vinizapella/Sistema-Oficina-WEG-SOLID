@@ -1,6 +1,7 @@
 package com.weg.oficina.dto.ordemServico;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record OrdemServicoAtualizarDto(
 
@@ -11,6 +12,10 @@ public record OrdemServicoAtualizarDto(
         String laudo,
 
         @NotBlank
-        String materiais
+        String materiais,
+
+        @NotNull
+        Long professorId
+
 ) {
 }

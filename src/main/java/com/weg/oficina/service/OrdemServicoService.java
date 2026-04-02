@@ -21,8 +21,6 @@ public class OrdemServicoService implements IOrdemServicoService{
 
     private final UsuarioRepository usuarioRepository;
 
-
-
     public OrdemServicoService(
             OrdemServicoRepository ordemServicoRepository,
             OrdemServicoMapper ordemServicoMapper,
@@ -38,8 +36,12 @@ public class OrdemServicoService implements IOrdemServicoService{
     public OrdemServicoResponseDto abrir(
             OrdemServicoRequestDto ordemServicoRequestDto
     ) {
-        var professor = (Professor) usuarioRepository.findById(ordemServicoRequestDto.professorId())
-                .orElseThrow(() -> new RuntimeException("Professor não encontrado"));
+        var usuario = usuarioRepository.findById(ordemServicoRequestDto.professorId())
+                .orElseThrow(()->new RuntimeException("Professor não encontrado"));
+
+        if (!(usuario instanceof Professor professor)){
+            throw new RuntimeException("Acesso negado. somente o professor responsavel pode encerrar esta Ordem de Serviço");
+        }
 
         var alunos = usuarioRepository.findAllById(ordemServicoRequestDto.alunosIds())
                 .stream()
@@ -59,6 +61,10 @@ public class OrdemServicoService implements IOrdemServicoService{
     ) {
         OrdemServico os = ordemServicoRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Ordem de serviço não encontrada"));
+
+        if (!os.getProfessor().getId().equals(ordemServicoAtualizarDto.professorId())){
+            throw new RuntimeException("Acesso negado. somente o professor responsavel pode encerrar esta Ordem de Serviço");
+        }
 
         os.setStatus(ordemServicoAtualizarDto.novoStatus());
         os.setLaudoTecnico(ordemServicoAtualizarDto.laudo());

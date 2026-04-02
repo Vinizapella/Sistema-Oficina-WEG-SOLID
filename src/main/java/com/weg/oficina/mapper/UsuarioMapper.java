@@ -30,7 +30,7 @@ public class UsuarioMapper {
             professor.setEspecialidade(professorRequestDto.especialidade());
             return professor;
         }
-        return null;
+        throw  new RuntimeException("Tipo de usuario descohecido");
     }
 
     public UsuarioResponseDto toResponse(
@@ -40,9 +40,9 @@ public class UsuarioMapper {
             return new AlunoResponseDto(
                     aluno.getId(),
                     aluno.getNome(),
-                    aluno.getMatricula(),
-                    aluno.getTipo()
-            );
+                    aluno.getTipo(),
+                    aluno.getMatricula()
+                    );
         }else if (usuario instanceof Professor professor){
             return new ProfessorResponseDto(
                     professor.getId(),
@@ -51,7 +51,7 @@ public class UsuarioMapper {
                     professor.getTipo()
             );
         }
-        return null;
+        throw  new RuntimeException("Tipo de usuario descohecido");
     }
 
 }
