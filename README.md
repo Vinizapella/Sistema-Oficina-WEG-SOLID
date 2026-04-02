@@ -295,7 +295,7 @@ src/main/java/com/weg/oficina/
 
 - Java 17+
 - Maven 3.8+
-- Banco de dados (H2 em memória já configurado para desenvolvimento)
+- Banco de dados (mysql)
 
 ### Passos
 
@@ -311,17 +311,15 @@ cd oficina-weg
 # http://localhost:8080
 ```
 
-O banco H2 (em memória) é inicializado automaticamente. Para acessar o console do banco durante o desenvolvimento:
-```
-http://localhost:8080/h2-console
-JDBC URL: jdbc:h2:mem:testdb
-```
-
 ---
 
 ## 🌐 Endpoints da API
 
-### Usuários
+> 💡 **Dica:** Para testar o fluxo completo, siga a ordem abaixo: cadastre os usuários primeiro, depois crie a turma, adicione alunos a ela e só então abra uma OS.
+
+---
+
+### 1. Usuários
 
 | Método | Endpoint | Descrição |
 |---|---|---|
@@ -334,8 +332,18 @@ JDBC URL: jdbc:h2:mem:testdb
 POST /usuarios
 {
   "tipo_usuario": "PROFESSOR",
-  "nome": "Mestre Ricardo",
-  "especialidade": "Eletromecânica"
+  "nome": "Lucas Souza",
+  "especialidade": "Engenharia da Computação"
+}
+```
+
+**Resposta:**
+```json
+{
+  "id": 1,
+  "nome": "Lucas Souza",
+  "tipo": "PROFESSOR",
+  "especialidade": "Engenharia da Computação"
 }
 ```
 
@@ -344,49 +352,113 @@ POST /usuarios
 POST /usuarios
 {
   "tipo_usuario": "ALUNO",
-  "nome": "Estudante Silva",
+  "nome": "Vinicius Zapella",
+  "matricula": "2024001"
+}
+```
+
+**Resposta:**
+```json
+{
+  "id": 2,
+  "nome": "Vinicius Zapella",
+  "tipo": "ALUNO",
   "matricula": "2024001"
 }
 ```
 
 ---
 
-### Turmas
+### 2. Turmas
 
 | Método | Endpoint | Descrição |
 |---|---|---|
 | `POST` | `/turmas` | Cria uma turma |
 | `PUT` | `/turmas/{turmaId}/aluno/{alunoId}` | Adiciona aluno à turma |
 
+**Exemplo — criar turma:**
+```json
+POST /turmas
+{
+  "nome": "Desenvolvimento de Sistemas MI78"
+}
+```
+
+**Resposta:**
+```json
+{
+  "id": 1,
+  "nome": "Desenvolvimento de Sistemas MI78",
+  "nomesAlunos": []
+}
+```
+
+**Exemplo — adicionar aluno à turma** (aluno ID 2 na turma ID 1):
+```
+PUT /turmas/1/aluno/2
+```
+
+**Resposta ao listar a turma após adicionar alunos:**
+```json
+{
+  "id": 1,
+  "nome": "Desenvolvimento de Sistemas MI78",
+  "nomesAlunos": [
+    "Vinicius Zapella"
+  ]
+}
+```
+
+> ⚠️ **Regra de segurança:** se tentar adicionar um professor (em vez de aluno) à turma, o sistema retorna erro com a mensagem `"Apenas alunos podem ser adicionados a uma turma"`.
+
 ---
 
-### Ordens de Serviço
+### 3. Ordens de Serviço
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `POST` | `/ordens` | Abre uma OS (professor) |
-| `PUT` | `/ordens/{id}` | Atualiza status/laudo/materiais |
+| `POST` | `/ordens` | Abre uma OS (apenas professor) |
+| `PUT` | `/ordens/{id}` | Atualiza status, laudo e materiais |
 
-**Exemplo — abrir OS:**
+**Exemplo — abrir OS** (professor ID 1 escala alunos ID 2 e 3):
 ```json
 POST /ordens
 {
   "equipamento": "Torno CNC - Lab 03",
   "defeitoRelatado": "Fuso com folga excessiva",
   "professorId": 1,
-  "alunosIds": [3, 4]
+  "alunosIds": [2, 3]
 }
 ```
 
-**Exemplo — encerrar OS:**
+**Resposta:**
+```json
+{
+  "id": 1,
+  "equipamento": "Torno CNC - Lab 03",
+  "defeitoRelatado": "Fuso com folga excessiva",
+  "status": "EXECUTANDO",
+  "materiaisUsados": null,
+  "laudoTecnico": null,
+  "nomeProfessor": "Lucas Souza",
+  "nomesAlunos": ["Vinicius Zapella", "Carlos Silva"]
+}
+```
+
+> ⚠️ **Regra de segurança:** se o `professorId` enviado não pertencer a um professor, o sistema retorna erro com a mensagem `"Acesso negado. somente o professor responsavel pode encerrar esta Ordem de Serviço"`.
+
+**Exemplo — encerrar OS** (somente o professor que abriu pode encerrar, informando o `professorId`):
 ```json
 PUT /ordens/1
 {
   "novoStatus": "CONCLUIDA",
   "laudo": "Substituído rolamento SKF 6205. Folga eliminada.",
-  "materiais": "Rolamento SKF 6205 (1 un), Graxa industrial (200g)"
+  "materiais": "Rolamento SKF 6205 (1 un), Graxa industrial (200g)",
+  "professorId": 1
 }
 ```
+
+> ⚠️ **Regra de segurança:** se o `professorId` enviado for diferente do professor que abriu a OS, o sistema retorna erro `400` com a mensagem `"Acesso negado. somente o professor responsavel pode encerrar esta Ordem de Serviço"`.
 
 ---
 
